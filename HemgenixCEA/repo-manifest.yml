@@ -1,0 +1,61 @@
+name: "HemgenixCEA"
+description: "Cost-effectiveness analysis of Hemgenix (etranacogene dezaparvovec) vs. Alprolix for hemophilia B in Canada"
+
+analysis_type: [cost-effectiveness]
+methods: [markov]
+language: [R]
+
+# Model structure
+model:
+  states: [No_bleed, JB, NJB, Death]       # JB = joint bleed, NJB = non-joint bleed
+  cycle_length: weekly                       # 1/52.17857 years per cycle
+  n_cycles: 3077                             # ~59-year lifetime horizon
+  starting_age: 41.5
+  discount_rate: 0.015                       # 1.5% costs and effects (Canadian guidelines)
+
+# Comparators
+comparators:
+  intervention: "Hemgenix (etranacogene dezaparvovec)"  # gene therapy, single infusion
+  comparator:   "Alprolix (eftrenonacog alfa)"           # extended half-life FIX prophylaxis
+
+# Key inputs
+inputs:
+  efficacy:
+    ABR_ED: 0.38          # annual bleeding rate, Hemgenix arm
+    AjBR_ED: 0.14         # annual joint bleeding rate, Hemgenix arm
+  utilities:
+    u_ED: 0.85            # baseline utility, Hemgenix arm
+    u_comp: 0.78          # baseline utility, comparator arm
+    ae_disutilities: utilities.xlsx
+  mortality:
+    source: Statistics Canada life tables 2022, both sexes
+    raw: db_all_mortality.csv
+    processed: df_mortality.rds
+    prep_script: bg_mortality.R
+  costs:
+    price_per_infusion_CAD: 4690000   # single Hemgenix infusion
+    state_costs: TODO                  # not yet parameterized
+
+# Outputs
+outputs:
+  primary: [LYs discounted, QALYs discounted, Costs discounted, ICER]
+  secondary: [LYs undiscounted, QALYs undiscounted]
+  format: HTML (knit from analysis.Rmd)
+
+# Entry points
+entrypoints:
+  main_analysis: analysis.Rmd
+  mortality_prep: bg_mortality.R
+  tests: [mortality_testing.R, mortality_testing_v2.R]
+
+# Data files
+data:
+  - db_all_mortality.csv      # Statistics Canada mortality table (raw download)
+  - db_all_mortality.xlsx     # same, Excel copy
+  - df_mortality.rds          # processed mortality lookup (output of bg_mortality.R)
+  - ED_mat_trans.RDS          # pre-computed Hemgenix transition matrix
+  - utilities.xlsx            # AE disutilities and event durations
+  - debugging.xlsx            # scratch / validation workbook
+
+contact: "agroote5@umcutrecht.nl"
+status: active
